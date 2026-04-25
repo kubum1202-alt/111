@@ -1,321 +1,72 @@
-// --- DOM 선택 ---
-const introScreen = document.getElementById('intro-screen');
-const gameContainer = document.getElementById('game-container');
-const canvas = document.getElementById('game-canvas');
-const ctx = canvas.getContext('2d');
-
-const playerHealthBar = document.getElementById('player-health');
-const enemyHealthBar = document.getElementById('enemy-health');
-const enemyNameDisplay = document.getElementById('enemy-name-display');
-const resultScreen = document.getElementById('result-screen');
-const resultMessage = document.getElementById('result-message');
-
-// --- 입력값 변수 ---
-let enemyNameStr = "마왕";
-let bossEmojiStr = "😈";
-let selectedWeapon = "fist";
-let difficultyLevel = "normal";
-
-// --- 캔버스 맵 크기 확장 (1600x900) ---
-canvas.width = 1600;
-canvas.height = 900;
-const groundLevel = canvas.height - 100; // 바닥 높이
-const gravity = 0.8; 
-let animationId; 
-let isGameOver = false;
-
-// --- 게임 설정값 (무기 및 난이도) ---
-const weaponData = {
-    fist:  { range: 80,  damage: 5,  color: 'rgba(255, 255, 255, 0.6)' },
-    sword: { range: 180, damage: 15, color: 'rgba(192, 192, 192, 0.8)' },
-    gun:   { range: 1200, damage: 10, color: 'rgba(255, 255, 0, 0.8)' }
-};
-
-const aiData = {
-    easy:   { speed: 3, attackChance: 0.02, damage: 5 },
-    normal: { speed: 5, attackChance: 0.04, damage: 10 },
-    hard:   { speed: 8, attackChance: 0.08, damage: 20 }
-};
-
-const keys = { a: { pressed: false }, d: { pressed: false } };
-
-// ==========================================
-// 파이터 클래스 (캐릭터/보스)
-// ==========================================
-class Fighter {
-    constructor({ position, color, isPlayer }) {
-        this.position = position;
-        this.velocity = { x: 0, y: 0 };
-        this.width = 80;
-        this.height = 200;
-        this.color = color;
-        this.isPlayer = isPlayer;
-        this.facing = isPlayer ? 'right' : 'left'; 
-        
-        // 무기 기본 세팅
-        this.weapon = isPlayer ? weaponData[selectedWeapon] : weaponData['fist'];
-        
-        this.attackBox = {
-            position: { x: this.position.x, y: this.position.y },
-            width: this.weapon.range,
-            height: 60
-        };
-        
-        this.isAttacking = false;
-        this.health = 100;
-        
-        // 플레이어는 고정속도 8, 적은 난이도별 속도
-        this.speed = isPlayer ? 8 : aiData[difficultyLevel].speed; 
-    }
-
-    draw() {
-        // --- 캐릭터 몸통 그리기 ---
-        ctx.fillStyle = this.color;
-        
-        // 적(보스)이고 이모티콘이 있다면 머리 부분을 이모티콘으로 대체
-        if (!this.isPlayer && bossEmojiStr) {
-            // 몸통 (목 아래)
-            ctx.fillRect(this.position.x, this.position.y + 60, this.width, this.height - 60);
-            // 이모티콘 얼굴
-            ctx.font = "80px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "top";
-            ctx.fillText(bossEmojiStr, this.position.x + this.width / 2, this.position.y - 10);
-        } else {
-            // 플레이어 또는 일반 그리기
-            ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
-        }
-
-        // --- 공격 이펙트 (Hitbox) 그리기 ---
-        if (this.isAttacking) {
-            ctx.fillStyle = this.weapon.color;
-            ctx.fillRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.width, this.attackBox.height);
-        }
-    }
-
-    update() {
-        this.draw();
-
-        // 공격 박스 방향 업데이트
-        this.attackBox.width = this.weapon.range;
-        if (this.facing === 'right') {
-            this.attackBox.position.x = this.position.x + this.width; 
-        } else {
-            this.attackBox.position.x = this.position.x - this.attackBox.width; 
-        }
-        this.attackBox.position.y = this.position.y + 40; 
-
-        // 이동 및 중력 적용
-        this.position.x += this.velocity.x;
-        this.position.y += this.velocity.y;
-
-        if (this.position.y + this.height + this.velocity.y >= groundLevel) {
-            this.velocity.y = 0;
-            this.position.y = groundLevel - this.height;
-        } else {
-            this.velocity.y += gravity; 
-        }
-
-        // 맵 끝을 벗어나지 못하게 제한
-        if (this.position.x <= 0) this.position.x = 0;
-        if (this.position.x + this.width >= canvas.width) this.position.x = canvas.width - this.width;
-    }
-
-    attack() {
-        this.isAttacking = true;
-        setTimeout(() => { this.isAttacking = false; }, 100);
-    }
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #111;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }
 
-let player;
-let enemy;
-
-// ==========================================
-// 게임 초기화
-// ==========================================
-function initGame() {
-    isGameOver = false;
-    
-    player = new Fighter({ position: { x: 200, y: 0 }, color: '#3498db', isPlayer: true });
-    enemy = new Fighter({ position: { x: canvas.width - 280, y: 0 }, color: '#e74c3c', isPlayer: false });
-
-    // 난이도에 따른 보스 설정 적용
-    enemy.weapon = { range: 100, damage: aiData[difficultyLevel].damage, color: 'rgba(255, 0, 0, 0.5)' };
-    
-    playerHealthBar.style.width = '100%';
-    enemyHealthBar.style.width = '100%';
-    resultScreen.classList.add('hidden');
-    
-    if(animationId) cancelAnimationFrame(animationId);
-    animate();
+.hidden {
+  display: none;
 }
 
-function rectangularCollision({ rectangle1, rectangle2 }) {
-    return (
-        rectangle1.attackBox.position.x + rectangle1.attackBox.width >= rectangle2.position.x &&
-        rectangle1.attackBox.position.x <= rectangle2.position.x + rectangle2.width &&
-        rectangle1.attackBox.position.y + rectangle1.attackBox.height >= rectangle2.position.y &&
-        rectangle1.attackBox.position.y <= rectangle2.position.y + rectangle2.height
-    );
+#intro-screen {
+  background: #222;
+  padding: 30px;
+  border-radius: 10px;
+  width: 300px;
 }
 
-// 승패 판정 (체력바 다 깎이는걸 기다리기 위해 0.5초 지연)
-function determineWinner() {
-    isGameOver = true;
-    setTimeout(() => {
-        resultScreen.classList.remove('hidden');
-        if (player.health === enemy.health) {
-            resultMessage.innerText = "무승부!";
-            resultMessage.style.color = '#fff';
-        } else if (player.health > enemy.health) {
-            resultMessage.innerText = "🎉 승리! 🎉";
-            resultMessage.style.color = '#2ed573';
-        } else {
-            resultMessage.innerText = `${enemyNameStr}에게 패배...`;
-            resultMessage.style.color = '#ff4757';
-        }
-    }, 500); 
+.input-group {
+  margin-bottom: 10px;
 }
 
-// ==========================================
-// 메인 루프
-// ==========================================
-function animate() {
-    if (isGameOver) return; 
-    animationId = requestAnimationFrame(animate);
-
-    // 배경과 바닥 그리기
-    ctx.fillStyle = '#2c3e50'; // 배경색
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#1a252f'; // 바닥색
-    ctx.fillRect(0, groundLevel, canvas.width, canvas.height - groundLevel);
-
-    player.update();
-    enemy.update();
-
-    // 플레이어 이동
-    player.velocity.x = 0;
-    if (keys.a.pressed) {
-        player.velocity.x = -player.speed;
-        player.facing = 'left';
-    } else if (keys.d.pressed) {
-        player.velocity.x = player.speed;
-        player.facing = 'right';
-    }
-
-    // 보스 AI
-    const distanceX = player.position.x - enemy.position.x;
-    if (Math.abs(distanceX) > enemy.weapon.range - 20) {
-        if (distanceX > 0) {
-            enemy.velocity.x = enemy.speed;
-            enemy.facing = 'right';
-        } else {
-            enemy.velocity.x = -enemy.speed;
-            enemy.facing = 'left';
-        }
-    } else {
-        enemy.velocity.x = 0;
-        // 난이도에 따른 공격 확률
-        if (Math.random() < aiData[difficultyLevel].attackChance && !enemy.isAttacking) {
-            enemy.attack();
-        }
-    }
-
-    // 타격 판정 (플레이어 -> 적)
-    if (player.isAttacking && rectangularCollision({ rectangle1: player, rectangle2: enemy })) {
-        player.isAttacking = false;
-        enemy.health -= player.weapon.damage;
-        if(enemy.health < 0) enemy.health = 0; // 체력이 음수로 내려가는 것 방지
-        enemyHealthBar.style.width = enemy.health + '%';
-    }
-
-    // 타격 판정 (적 -> 플레이어)
-    if (enemy.isAttacking && rectangularCollision({ rectangle1: enemy, rectangle2: player })) {
-        enemy.isAttacking = false;
-        player.health -= enemy.weapon.damage;
-        if(player.health < 0) player.health = 0; 
-        playerHealthBar.style.width = player.health + '%';
-    }
-
-    // 누군가의 체력이 0이 되면 게임 종료
-    if (enemy.health <= 0 || player.health <= 0) {
-        determineWinner();
-    }
+input {
+  width: 100%;
+  padding: 10px;
 }
 
-// ==========================================
-// PC 조작 (키보드)
-// ==========================================
-window.addEventListener('keydown', (event) => {
-    if(isGameOver) return;
-    switch (event.key) {
-        case 'a': case 'A': keys.a.pressed = true; break;
-        case 'd': case 'D': keys.d.pressed = true; break;
-        // 점프: 스페이스바
-        case ' ': 
-            if (player.velocity.y === 0) player.velocity.y = -22; 
-            break;
-        // 공격: 방향키 아무거나 누르면 공격
-        case 'ArrowLeft': case 'ArrowRight': case 'ArrowUp': case 'ArrowDown':
-            if (!player.isAttacking) player.attack();
-            break;
-    }
-});
-window.addEventListener('keyup', (event) => {
-    switch (event.key) {
-        case 'a': case 'A': keys.a.pressed = false; break;
-        case 'd': case 'D': keys.d.pressed = false; break;
-    }
-});
+button {
+  padding: 10px;
+  cursor: pointer;
+}
 
-// ==========================================
-// 모바일 조작 (터치 버튼)
-// ==========================================
-const btnLeft = document.getElementById('btn-left');
-const btnRight = document.getElementById('btn-right');
-const btnJump = document.getElementById('btn-jump');
-const btnAttack = document.getElementById('btn-attack');
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
 
-// 이동 터치
-btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); keys.a.pressed = true; });
-btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); keys.a.pressed = false; });
+#game-ui {
+  position: absolute;
+  top: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
 
-btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); keys.d.pressed = true; });
-btnRight.addEventListener('touchend', (e) => { e.preventDefault(); keys.d.pressed = false; });
+.health-bar-bg {
+  width: 200px;
+  height: 20px;
+  background: red;
+}
 
-// 점프/공격 터치
-btnJump.addEventListener('touchstart', (e) => { 
-    e.preventDefault(); 
-    if (player.velocity.y === 0 && !isGameOver) player.velocity.y = -22; 
-});
-btnAttack.addEventListener('touchstart', (e) => { 
-    e.preventDefault(); 
-    if (!player.isAttacking && !isGameOver) player.attack(); 
-});
+.health-bar-fill {
+  height: 100%;
+  background: lime;
+  width: 100%;
+}
 
-
-// ==========================================
-// 버튼 이벤트
-// ==========================================
-document.getElementById('start-btn').addEventListener('click', () => {
-    const inputName = document.getElementById('enemy-name-input').value.trim();
-    const inputEmoji = document.getElementById('boss-emoji-input').value.trim();
-    
-    enemyNameStr = inputName || "마왕";
-    bossEmojiStr = inputEmoji || "😈";
-    selectedWeapon = document.getElementById('weapon-select').value;
-    difficultyLevel = document.getElementById('difficulty-select').value;
-    
-    enemyNameDisplay.innerText = enemyNameStr;
-    introScreen.classList.add('hidden');
-    gameContainer.classList.remove('hidden');
-
-    initGame(); 
-});
-
-document.getElementById('restart-btn').addEventListener('click', () => {
-    keys.a.pressed = false;
-    keys.d.pressed = false;
-    gameContainer.classList.add('hidden');
-    introScreen.classList.remove('hidden');
-});
+#result-screen {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
