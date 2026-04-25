@@ -1,72 +1,41 @@
-body {
-  margin: 0;
-  font-family: sans-serif;
-  background: #111;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
+const startBtn = document.getElementById("start-btn");
+const intro = document.getElementById("intro-screen");
+const game = document.getElementById("game-container");
 
-.hidden {
-  display: none;
-}
+const playerHealthBar = document.getElementById("player-health");
+const enemyHealthBar = document.getElementById("enemy-health");
 
-#intro-screen {
-  background: #222;
-  padding: 30px;
-  border-radius: 10px;
-  width: 300px;
-}
+const attackBtn = document.getElementById("attack");
 
-.input-group {
-  margin-bottom: 10px;
-}
+const resultScreen = document.getElementById("result-screen");
+const resultText = document.getElementById("result-message");
 
-input {
-  width: 100%;
-  padding: 10px;
-}
+let playerHP = 100;
+let enemyHP = 100;
 
-button {
-  padding: 10px;
-  cursor: pointer;
-}
+startBtn.onclick = () => {
+  intro.classList.add("hidden");
+  game.classList.remove("hidden");
+};
 
-#game-container {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-}
+attackBtn.onclick = () => {
+  enemyHP -= Math.random() * 20;
+  playerHP -= Math.random() * 10;
 
-#game-ui {
-  position: absolute;
-  top: 10px;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-}
+  if (enemyHP < 0) enemyHP = 0;
+  if (playerHP < 0) playerHP = 0;
 
-.health-bar-bg {
-  width: 200px;
-  height: 20px;
-  background: red;
-}
+  enemyHealthBar.style.width = enemyHP + "%";
+  playerHealthBar.style.width = playerHP + "%";
 
-.health-bar-fill {
-  height: 100%;
-  background: lime;
-  width: 100%;
-}
+  if (enemyHP <= 0) {
+    endGame("승리!");
+  } else if (playerHP <= 0) {
+    endGame("패배...");
+  }
+};
 
-#result-screen {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
+function endGame(text) {
+  resultScreen.classList.remove("hidden");
+  resultText.textContent = text;
 }
