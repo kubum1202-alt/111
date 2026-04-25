@@ -2,48 +2,81 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2D 격투 게임</title>
+    <!-- 모바일 화면 비율 고정 및 확대 방지 (매우 중요) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2D 격투 게임 - 확장판</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- 시작 화면 (Intro Screen) -->
+    <!-- 시작 화면 -->
     <div id="intro-screen">
         <h1>🔥 2D BATTLE 🔥</h1>
-        <p>싸울 적의 이름을 입력하세요</p>
-        <input type="text" id="enemy-name-input" placeholder="이름 미입력 시 '보스'로 설정" autocomplete="off">
+        
+        <div class="input-group">
+            <label>적 이름</label>
+            <input 입력="text" id="enemy-name-input" placeholder="보스 이름 (기본: 마왕)">
+        </div>
+
+        <div class="input-group">
+            <label>적 얼굴 (이모티콘)</label>
+            <input 입력="text" id="boss-emoji-input" placeholder="예: 😈" value="😈" maxlength="2">
+        </div>
+
+        <div class="input-group">
+            <label>내 무기</label>
+            <select id="weapon-select">
+                <option value="fist">주먹 (근거리)</option>
+                <option value="sword">검 (중거리, 강함)</option>
+                <option value="gun">총 (원거리)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>난이도</label>
+            <select id="difficulty-select">
+                <option value="easy">쉬움</option>
+                <option value="normal" selected>보통</option>
+                <option value="hard">어려움</option>
+            </select>
+        </div>
+
         <button id="start-btn">게임 시작</button>
     </div>
 
-    <!-- 게임 화면 컨테이너 -->
+    <!-- 게임 화면 -->
     <div id="game-container" class="hidden">
-        <!-- 게임 UI (체력바 등) -->
         <div id="game-ui">
             <!-- 플레이어 UI -->
             <div class="health-container player-ui">
-                <div class="name-tag">플레이어 (You)</div>
-                <div class="health-bar-bg">
-                    <div id="player-health" class="health-bar-fill"></div>
-                </div>
+                <div class="name-tag">플레이어</div>
+                <div class="health-bar-bg"><div id="player-health" class="health-bar-fill"></div></div>
             </div>
 
             <!-- 적 UI -->
             <div class="health-container enemy-ui">
                 <div id="enemy-name-display" class="name-tag">적 이름</div>
-                <div class="health-bar-bg">
-                    <div id="enemy-health" class="health-bar-fill"></div>
-                </div>
+                <div class="health-bar-bg"><div id="enemy-health" class="health-bar-fill"></div></div>
             </div>
         </div>
 
-        <!-- 결과 화면 팝업 -->
         <div id="result-screen" class="hidden">
             <h2 id="result-message">승리!</h2>
             <button id="restart-btn">다시 하기</button>
         </div>
 
-        <!-- 실제 게임이 그려질 캔버스 -->
         <canvas id="game-canvas"></canvas>
+
+        <!-- 모바일 전용 가상 조이패드 -->
+        <div id="mobile-controls">
+            <div class="d-pad">
+                <button id="btn-left">◀</button>
+                <button id="btn-right">▶</button>
+            </div>
+            <div class="action-pad">
+                <button id="btn-jump">점프</button>
+                <button id="btn-attack">공격</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
