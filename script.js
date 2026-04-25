@@ -1,67 +1,81 @@
-const startBtn = document.getElementById("start-btn");
-const intro = document.getElementById("intro-screen");
-const game = document.getElementById("game-container");
+const game = new Chess();
+let board = null;
 
-const playerHealthBar = document.getElementById("player-health");
-const enemyHealthBar = document.getElementById("enemy-health");
+const statusEl = document.getElementById("status");
+const resetBtn = document.getElementById("resetBtn");
 
-const attackBtn = document.getElementById("attack");
+// 상태 업데이트
+function updateStatus() {
+  let status = "";
 
-const resultScreen = document.getElementById("result-screen");
-const resultText = document.getElementById("result-message");
+  const moveColor = game.turn() === "w" ? "백" : "흑";
 
-let playerHP = 100;
-let enemyHP = 100;
-let gameRunning = false;
+  if (game.in_checkmate()) {
+    status = `체크메이트! ${moveColor === "백" ? "흑" : "백"} 승리`;
+    alert(status);
+  } else if (game.in_draw()) {
+    status = "무승부!";
+    alert(status);
+  } else {
+    status = `${moveColor} 차례`;
 
-// 🔥 시작 버튼
-startBtn.addEventListener("click", () => {
-  // 상태 초기화
-  playerHP = 100;
-  enemyHP = 100;
-  gameRunning = true;
-
-  // UI 초기화
-  playerHealthBar.style.width = "100%";
-  enemyHealthBar.style.width = "100%";
-
-  resultScreen.classList.add("hidden");
-
-  intro.classList.add("hidden");
-  game.classList.remove("hidden");
-
-  console.log("게임 시작"); // 🔍 디버그
-});
-
-// 🔥 공격 버튼
-attackBtn.addEventListener("click", () => {
-  if (!gameRunning) return; // 시작 전엔 실행 안됨
-
-  // 데미지
-  enemyHP -= Math.floor(Math.random() * 20);
-  playerHP -= Math.floor(Math.random() * 10);
-
-  // 최소값 제한
-  if (enemyHP < 0) enemyHP = 0;
-  if (playerHP < 0) playerHP = 0;
-
-  // UI 반영
-  enemyHealthBar.style.width = enemyHP + "%";
-  playerHealthBar.style.width = playerHP + "%";
-
-  console.log("플레이어:", playerHP, "적:", enemyHP); // 🔍 디버그
-
-  // 🔥 여기서만 승패 판정
-  if (enemyHP === 0) {
-    gameRunning = false;
-    showResult("승리!");
-  } else if (playerHP === 0) {
-    gameRunning = false;
-    showResult("패배...");
+    if (game.in_check()) {
+      status += " (체크!)";
+      alert("체크!");
+    }
   }
+
+  statusEl.innerText = status;
+}
+
+// 드래그 시작
+function onDragStart(source, piece) {
+  // 게임 끝났으면 못 움직임
+  if (game.game_over()) return false;
+
+  // 자기 턴 아니면 못 움직임
+  if (
+    (game.turn() === "w" && piece.search(/^b/) !== -1) ||
+    (game.turn() === "b" && piece.search(/^w/) !== -1)
+  ) {
+    return false;
+  }
+}
+
+// 말 놓기
+function onDrop(source, target) {
+  const move = game.move({
+    from: source,
+    까지: target,
+    promotion: "q" // 항상 퀸으로 승격
+  });
+
+  // 불법 이동이면 되돌림
+  if (move === null) return "snapback";
+
+  updateStatus();
+}
+
+// 애니메이션 후 위치 동기화
+function onSnapEnd() {
+  board.position(game.fen());
+}
+
+// 체스판 설정
+board = Chessboard("board", {
+  draggable: true,
+  position: "start",
+  onDragStart: onDragStart,
+  onDrop: onDrop,
+  onSnapEnd: onSnapEnd
 });
 
-function showResult(text) {
-  resultText.textContent = text;
-  resultScreen.classList.remove("hidden");
-}
+// 초기 상태
+updateStatus();
+
+// 리셋 버튼
+resetBtn.addEventListener("click", () => {
+  game.reset();
+  board.start();
+  updateStatus();
+});
