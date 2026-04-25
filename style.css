@@ -1,0 +1,147 @@
+/* 기본 초기화 */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Malgun Gothic', sans-serif;
+}
+
+body {
+    background-color: #1a1a1a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: white;
+}
+
+/* 숨김 유틸리티 클래스 */
+.hidden {
+    display: none !important;
+}
+
+/* 시작 화면 디자인 */
+#intro-screen {
+    text-align: center;
+    background: #2c2c2c;
+    padding: 50px 70px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+#intro-screen h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    color: #ff4757;
+}
+
+#intro-screen input {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin: 20px 0;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 5px;
+    text-align: center;
+}
+
+#intro-screen button, #result-screen button {
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    background-color: #2ed573;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#intro-screen button:hover, #result-screen button:hover {
+    background-color: #26b360;
+}
+
+/* 게임 컨테이너 및 캔버스 */
+#game-container {
+    position: relative;
+    width: 1024px;
+    height: 576px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    background-color: #333;
+}
+
+#game-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #4a4a4a; /* 임시 배경색 */
+}
+
+/* 게임 UI (체력바 등) */
+#game-ui {
+    position: absolute;
+    top: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 40px;
+    pointer-events: none; /* UI 클릭 방지 */
+}
+
+.health-container {
+    width: 40%;
+}
+
+.name-tag {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+}
+
+.enemy-ui {
+    text-align: right;
+}
+
+.health-bar-bg {
+    width: 100%;
+    height: 30px;
+    background-color: #ff4757;
+    border: 3px solid #fff;
+    position: relative;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.health-bar-fill {
+    height: 100%;
+    background-color: #2ed573;
+    width: 100%;
+    transition: width 0.2s ease-out; /* 체력 깎일 때 부드러운 애니메이션 */
+}
+
+.enemy-ui .health-bar-fill {
+    float: right; /* 적 체력바는 오른쪽부터 깎이도록 설정 */
+}
+
+/* 결과 화면 오버레이 */
+#result-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+#result-message {
+    font-size: 4rem;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 10px rgba(0,0,0,1);
+}

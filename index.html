@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D 격투 게임</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 시작 화면 (Intro Screen) -->
+    <div id="intro-screen">
+        <h1>🔥 2D BATTLE 🔥</h1>
+        <p>싸울 적의 이름을 입력하세요</p>
+        <input type="text" id="enemy-name-input" placeholder="이름 미입력 시 '보스'로 설정" autocomplete="off">
+        <button id="start-btn">게임 시작</button>
+    </div>
+
+    <!-- 게임 화면 컨테이너 -->
+    <div id="game-container" class="hidden">
+        <!-- 게임 UI (체력바 등) -->
+        <div id="game-ui">
+            <!-- 플레이어 UI -->
+            <div class="health-container player-ui">
+                <div class="name-tag">플레이어 (You)</div>
+                <div class="health-bar-bg">
+                    <div id="player-health" class="health-bar-fill"></div>
+                </div>
+            </div>
+
+            <!-- 적 UI -->
+            <div class="health-container enemy-ui">
+                <div id="enemy-name-display" class="name-tag">적 이름</div>
+                <div class="health-bar-bg">
+                    <div id="enemy-health" class="health-bar-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 결과 화면 팝업 -->
+        <div id="result-screen" class="hidden">
+            <h2 id="result-message">승리!</h2>
+            <button id="restart-btn">다시 하기</button>
+        </div>
+
+        <!-- 실제 게임이 그려질 캔버스 -->
+        <canvas id="game-canvas"></canvas>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
