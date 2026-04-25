@@ -1,58 +1,165 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>2D BATTLE</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>간단 슈팅 게임</title>
+<style>
+    body {
+        margin: 0;
+        background: #111;
+        color: white;
+        text-align: center;
+        font-family: sans-serif;
+    }
+
+    canvas {
+        background: #222;
+        display: block;
+        margin: 20px auto;
+        border: 2px solid white;
+    }
+
+    button {
+        padding: 10px 20px;
+        font-size: 18px;
+        cursor: pointer;
+    }
+</style>
 </head>
 <body>
 
-<div id="intro-screen">
-  <h1>🔥 2D BATTLE 🔥</h1>
+<h1>슈팅 게임</h1>
+<button onclick="startGame()">게임 시작</button>
+<p id="status">대기 중</p>
 
-  <div class="input-group">
-    <label>적 이름</label>
-    <input 입력="text" id="enemy-name-input" placeholder="보스 이름 (기본: 마왕)">
-  </div>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
 
-  <div class="input-group">
-    <label>적 얼굴</label>
-    <input 입력="text" id="boss-emoji-input" value="😈">
-  </div>
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-  <button id="start-btn">게임 시작</button>
-</div>
+let player;
+let bullets = [];
+let enemies = [];
+let gameStarted = false;
 
-<div id="game-container" class="hidden">
-  <div id="game-ui">
-    <div class="health-container">
-      <div class="name-tag">플레이어</div>
-      <div class="health-bar-bg">
-        <div id="player-health" class="health-bar-fill"></div>
-      </div>
-    </div>
+// 플레이어
+function createPlayer() {
+    return {
+        x: 280,
+        y: 350,
+        width: 40,
+        height: 40
+    };
+}
 
-    <div class="health-container enemy-ui">
-      <div id="enemy-name-display" class="name-tag">적</div>
-      <div class="health-bar-bg">
-        <div id="enemy-health" class="health-bar-fill"></div>
-      </div>
-    </div>
-  </div>
+// 적 생성
+function createEnemies() {
+    let arr = [];
+    for (let i = 0; i < 5; i++) {
+        arr.push({
+            x: i * 100 + 50,
+            y: 50,
+            width: 40,
+            height: 40
+        });
+    }
+    return arr;
+}
 
-  <canvas id="game-canvas"></canvas>
+// 게임 시작
+function startGame() {
+    player = createPlayer();
+    bullets = [];
+    enemies = createEnemies(); // ⭐ 핵심: 시작할 때 생성
+    gameStarted = true;
 
-  <div id="result-screen" class="hidden">
-    <h2 id="result-message">승리!</h2>
-    <button id="restart-btn">다시 하기</button>
-  </div>
+    document.getElementById("status").innerText = "게임 진행 중";
+}
 
-  <div id="mobile-controls">
-    <button id="attack">공격</button>
-  </div>
-</div>
+// 총알 발사
+document.addEventListener("keydown", (e) => {
+    if (!gameStarted) return;
 
-<script src="script.js" defer></script>
+    if (e.code === "Space") {
+        bullets.push({
+            x: player.x + 18,
+            y: player.y,
+            width: 5,
+            height: 10
+        });
+    }
+
+    if (e.code === "ArrowLeft") player.x -= 20;
+    if (e.code === "ArrowRight") player.x += 20;
+});
+
+// 충돌 체크
+function isColliding(a, b) {
+    return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+    );
+}
+
+// 업데이트
+function update() {
+    if (!gameStarted) return;
+
+    // 총알 이동
+    bullets.forEach(b => b.y -= 5);
+
+    // 충돌 처리
+    bullets.forEach((b, bi) => {
+        enemies.forEach((e, ei) => {
+            if (isColliding(b, e)) {
+                bullets.splice(bi, 1);
+                enemies.splice(ei, 1);
+            }
+        });
+    });
+
+    // ⭐ 승리 조건 (핵심 수정)
+    if (gameStarted && enemies.length === 0) {
+        document.getElementById("status").innerText = "🎉 승리!";
+        gameStarted = false;
+    }
+}
+
+// 그리기
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 플레이어
+    if (player) {
+        ctx.fillStyle = "cyan";
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+
+    // 총알
+    ctx.fillStyle = "yellow";
+    bullets.forEach(b => {
+        ctx.fillRect(b.x, b.y, b.width, b.height);
+    });
+
+    // 적
+    ctx.fillStyle = "red";
+    enemies.forEach(e => {
+        ctx.fillRect(e.x, e.y, e.width, e.height);
+    });
+}
+
+// 게임 루프
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
 </body>
 </html>
