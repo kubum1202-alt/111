@@ -1,24 +1,24 @@
-const startBtn = document.getElementById("start-btn");
-const intro = document.getElementById("intro-screen");
-const game = document.getElementById("game-container");
-
-const playerHealthBar = document.getElementById("player-health");
-const enemyHealthBar = document.getElementById("enemy-health");
-
-const attackBtn = document.getElementById("attack");
-
-const resultScreen = document.getElementById("result-screen");
-const resultText = document.getElementById("result-message");
-
 let playerHP = 100;
 let enemyHP = 100;
+let gameStarted = false;
 
 startBtn.onclick = () => {
+  playerHP = 100;
+  enemyHP = 100;
+  gameStarted = true;
+
+  playerHealthBar.style.width = "100%";
+  enemyHealthBar.style.width = "100%";
+
+  resultScreen.classList.add("hidden");
+
   intro.classList.add("hidden");
   game.classList.remove("hidden");
 };
 
 attackBtn.onclick = () => {
+  if (!gameStarted) return; // 🔥 시작 안 했으면 실행 금지
+
   enemyHP -= Math.random() * 20;
   playerHP -= Math.random() * 10;
 
@@ -29,8 +29,10 @@ attackBtn.onclick = () => {
   playerHealthBar.style.width = playerHP + "%";
 
   if (enemyHP <= 0) {
+    gameStarted = false;
     endGame("승리!");
   } else if (playerHP <= 0) {
+    gameStarted = false;
     endGame("패배...");
   }
 };
